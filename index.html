@@ -56,6 +56,23 @@ ul{margin:0; padding:0;}
 @keyframes loadmove{0%{transform:translateX(-100%);}100%{transform:translateX(350%);}}
 #scroll-progress{position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--red),var(--gold),var(--teal)); z-index:1200; width:0%; transition:width .1s linear;}
 
+/* ---------- Access Gate (Nama & Kelas) ---------- */
+#access-gate{ position:fixed; inset:0; z-index:10000; background:linear-gradient(145deg,var(--navy),var(--navy-deep) 55%,#081f4d); display:flex; align-items:center; justify-content:center; padding:20px; transition:opacity .5s var(--ease), visibility .5s var(--ease); }
+#access-gate.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+#access-gate::before{ content:''; position:absolute; inset:0; z-index:-1; opacity:.5; background-image:radial-gradient(circle at 15% 20%, rgba(240,191,62,.25), transparent 40%), radial-gradient(circle at 85% 80%, rgba(47,182,172,.3), transparent 45%); }
+.gate-card{ width:100%; max-width:420px; background:var(--card); border-radius:var(--radius-lg); padding:36px 30px; box-shadow:var(--shadow-lg); text-align:center; animation:fadeUp .5s var(--ease); }
+.gate-logo{width:64px; height:64px; border-radius:18px; background:var(--white); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; padding:6px; border:1px solid var(--line);}
+.gate-logo img{width:100%; height:100%; object-fit:contain;}
+.gate-card h2{font-size:1.3rem; margin-bottom:8px;}
+.gate-card p{font-size:.85rem; color:var(--muted); line-height:1.6; margin-bottom:22px;}
+.gate-field{text-align:left; margin-bottom:14px;}
+.gate-field label{display:block; font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
+.gate-field input{width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line); background:var(--cloud); font-size:.92rem; color:var(--ink); font-family:var(--font-body);}
+.gate-field input:focus{outline:none; border-color:var(--navy);}
+.gate-error{font-size:.8rem; color:var(--red-deep); background:#FDE7E7; border-radius:9px; padding:9px 12px; margin-bottom:14px; display:none;}
+.gate-error.show{display:block;}
+.gate-note{font-size:.72rem; color:var(--muted); margin-top:14px; line-height:1.6;}
+
 /* ---------- Navbar ---------- */
 header.nav{ position:sticky; top:0; z-index:1000; background:var(--glass-bg); backdrop-filter:blur(16px) saturate(160%); -webkit-backdrop-filter:blur(16px) saturate(160%); border-bottom:1px solid var(--glass-border); transition:background .4s var(--ease), border-color .4s var(--ease); }
 .nav-inner{max-width:1320px; margin:0 auto; padding:10px 24px; display:flex; align-items:center; gap:12px;}
@@ -465,6 +482,19 @@ footer .flinks a:hover{color:var(--gold);}
 </head>
 <body data-theme="light">
 
+<div id="access-gate">
+  <div class="gate-card">
+    <div class="gate-logo"><img id="gate-logo-img" alt="Logo SMA Negeri 1 Sewon"></div>
+    <h2>Selamat Datang di SMARD</h2>
+    <p>Silakan isi Nama dan Kelas untuk mulai belajar. Data ini digunakan guru untuk memantau siapa saja yang mengakses aplikasi ini.</p>
+    <div class="gate-field"><label for="gate-nama">Nama Lengkap</label><input type="text" id="gate-nama" placeholder="Contoh: Rina Wulandari" autocomplete="off" onkeypress="if(event.key==='Enter') submitGate()"></div>
+    <div class="gate-field"><label for="gate-kelas">Kelas</label><input type="text" id="gate-kelas" placeholder="Contoh: XI IPA 2" autocomplete="off" onkeypress="if(event.key==='Enter') submitGate()"></div>
+    <div class="gate-error" id="gate-error"></div>
+    <button class="btn btn-primary" id="gate-submit" onclick="submitGate()" style="width:100%; justify-content:center;">Mulai Belajar →</button>
+    <p class="gate-note">🔒 Data hanya digunakan untuk pemantauan belajar oleh guru, tidak dibagikan ke pihak lain.</p>
+  </div>
+</div>
+
 <div id="loading-screen">
   <div class="load-badge"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0A3D91" stroke-width="2"><path d="M12 2l2.4 6.8L21 11l-6.6 2.2L12 20l-2.4-6.8L3 11l6.6-2.2L12 2z"/></svg></div>
   <div class="load-text">SMARD</div>
@@ -730,6 +760,49 @@ footer .flinks a:hover{color:var(--gold);}
 
 <script>
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+/* ============================================================ ACCESS GATE (Nama & Kelas → Google Form) ============================================================
+   CARA KONFIGURASI:
+   1. Buat Google Form dengan 2 pertanyaan singkat: "Nama" dan "Kelas".
+   2. Di Form, klik titik tiga (⋮) → "Get pre-filled link" → isi contoh jawaban → "Get link".
+   3. Link yang dihasilkan akan terlihat seperti:
+      https://docs.google.com/forms/d/e/1FAIpQLSxxxxxxx/viewform?usp=pp_url&entry.111111111=Nama&entry.222222222=Kelas
+   4. Salin bagian "1FAIpQLSxxxxxxx" (ID form) dan dua angka "entry.xxxxxxxxx" tersebut ke bawah ini.
+   5. GOOGLE_FORM_ACTION_URL formatnya selalu: https://docs.google.com/forms/d/e/[ID_FORM]/formResponse
+============================================================ */
+const GOOGLE_FORM_ACTION_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeQQ-V_iLwbfzTEsUHQs0IO7OkPyxC20-3mO5OIQHHNM731yQ/formResponse";
+const GOOGLE_FORM_ENTRY_NAMA = "entry.366340186";
+const GOOGLE_FORM_ENTRY_KELAS = "entry.2063301968";
+
+function initGateLogo(){
+  const src = document.querySelector('.brand-logo-wrap img') ? document.querySelector('.brand-logo-wrap img').getAttribute('src') : null;
+  const gateLogo = document.getElementById('gate-logo-img');
+  if(src && gateLogo) gateLogo.setAttribute('src', src);
+}
+initGateLogo();
+
+function logAccessToSheet(nama, kelas){
+  if(GOOGLE_FORM_ACTION_URL.indexOf('PASTE_')!==-1){ console.warn('[SMARD] Google Form belum dikonfigurasi — akses tidak dicatat. Lihat komentar ACCESS GATE di kode untuk cara konfigurasi.'); return; }
+  try{
+    const fd = new FormData();
+    fd.append(GOOGLE_FORM_ENTRY_NAMA, nama);
+    fd.append(GOOGLE_FORM_ENTRY_KELAS, kelas);
+    fetch(GOOGLE_FORM_ACTION_URL, { method:'POST', mode:'no-cors', body: fd }).catch(()=>{});
+  }catch(e){ console.warn('[SMARD] Gagal mencatat akses:', e); }
+}
+
+function submitGate(){
+  const nama=document.getElementById('gate-nama').value.trim();
+  const kelas=document.getElementById('gate-kelas').value.trim();
+  const err=document.getElementById('gate-error');
+  if(!nama || !kelas){ err.textContent='Nama dan Kelas wajib diisi.'; err.classList.add('show'); return; }
+  err.classList.remove('show');
+  const btn=document.getElementById('gate-submit'); btn.disabled=true; btn.textContent='Memproses...';
+  logAccessToSheet(nama, kelas);
+  setTimeout(()=>{ document.getElementById('access-gate').classList.add('hidden'); }, 300);
+}
+document.getElementById('gate-nama').focus();
+
 function svgIcon(paths){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;}
 
 /* ============================================================ NAV ============================================================ */
